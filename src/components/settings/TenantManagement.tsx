@@ -7,8 +7,33 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Switch } from "@/components/ui/switch";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
-import { Plus, Edit, Trash2, Eye, EyeOff } from "lucide-react";
+import { Plus } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
+import { TenantCard } from "./TenantCard";
+import { TenantConfigDialog } from "./TenantConfigDialog";
+
+interface TenantConfig {
+  maxConnections: number;
+  connectionTimeout: number;
+  queryTimeout: number;
+  enableReadReplica: boolean;
+  smtpHost: string;
+  smtpPort: number;
+  smtpUsername: string;
+  smtpPassword: string;
+  fromEmail: string;
+  enableEmailNotifications: boolean;
+  enableTwoFactor: boolean;
+  sessionTimeout: number;
+  maxLoginAttempts: number;
+  enableAuditLogging: boolean;
+  timezone: string;
+  dateFormat: string;
+  currency: string;
+  language: string;
+  enableMobileApp: boolean;
+  enableApiAccess: boolean;
+}
 
 interface Tenant {
   id: string;
@@ -18,6 +43,7 @@ interface Tenant {
   isActive: boolean;
   createdAt: string;
   adminEmail: string;
+  config?: TenantConfig;
 }
 
 export const TenantManagement = () => {
@@ -43,7 +69,9 @@ export const TenantManagement = () => {
   ]);
 
   const [isAddDialogOpen, setIsAddDialogOpen] = useState(false);
+  const [isConfigDialogOpen, setIsConfigDialogOpen] = useState(false);
   const [editingTenant, setEditingTenant] = useState<Tenant | null>(null);
+  const [configuringTenant, setConfiguringTenant] = useState<Tenant | null>(null);
   const [showConnectionStrings, setShowConnectionStrings] = useState<{[key: string]: boolean}>({});
   const { toast } = useToast();
 
@@ -104,6 +132,23 @@ export const TenantManagement = () => {
     setIsAddDialogOpen(true);
   };
 
+  const handleConfigure = (tenant: Tenant) => {
+    setConfiguringTenant(tenant);
+    setIsConfigDialogOpen(true);
+  };
+
+  const handleSaveConfig = (tenantId: string, config: TenantConfig) => {
+    setTenants(tenants.map(tenant => 
+      tenant.id === tenantId 
+        ? { ...tenant, config }
+        : tenant
+    ));
+    toast({
+      title: "Configuration Saved",
+      description: "Tenant configuration has been updated successfully.",
+    });
+  };
+
   const handleDelete = (tenantId: string) => {
     setTenants(tenants.filter(tenant => tenant.id !== tenantId));
     toast({
@@ -136,7 +181,7 @@ export const TenantManagement = () => {
             <div>
               <CardTitle>Tenant Management</CardTitle>
               <CardDescription>
-                Manage tenant organizations and their database connections
+                Manage tenant organizations and their configurations
               </CardDescription>
             </div>
             <Dialog open={isAddDialogOpen} onOpenChange={setIsAddDialogOpen}>
@@ -235,68 +280,30 @@ export const TenantManagement = () => {
         <CardContent>
           <div className="space-y-4">
             {tenants.map((tenant) => (
-              <div key={tenant.id} className="border rounded-lg p-4 space-y-3">
-                <div className="flex items-center justify-between">
-                  <div>
-                    <h3 className="font-semibold text-lg">{tenant.name}</h3>
-                    <p className="text-sm text-gray-600">{tenant.domain}</p>
-                  </div>
-                  <div className="flex items-center gap-2">
-                    <Switch
-                      checked={tenant.isActive}
-                      onCheckedChange={() => toggleTenantStatus(tenant.id)}
-                    />
-                    <span className={`text-sm ${tenant.isActive ? 'text-green-600' : 'text-red-600'}`}>
-                      {tenant.isActive ? 'Active' : 'Inactive'}
-                    </span>
-                  </div>
-                </div>
-                
-                <div className="grid grid-cols-2 gap-4 text-sm">
-                  <div>
-                    <span className="font-medium">Admin Email:</span>
-                    <p className="text-gray-600">{tenant.adminEmail}</p>
-                  </div>
-                  <div>
-                    <span className="font-medium">Created:</span>
-                    <p className="text-gray-600">{tenant.createdAt}</p>
-                  </div>
-                </div>
-
-                <div>
-                  <div className="flex items-center gap-2 mb-2">
-                    <span className="font-medium text-sm">Database Connection:</span>
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      onClick={() => toggleConnectionString(tenant.id)}
-                    >
-                      {showConnectionStrings[tenant.id] ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
-                    </Button>
-                  </div>
-                  <div className="bg-gray-50 p-2 rounded text-sm font-mono">
-                    {showConnectionStrings[tenant.id] 
-                      ? tenant.connectionString 
-                      : tenant.connectionString.replace(/(:)([^:@]+)(@)/g, ':***@')
-                    }
-                  </div>
-                </div>
-
-                <div className="flex gap-2 pt-2">
-                  <Button variant="outline" size="sm" onClick={() => handleEdit(tenant)}>
-                    <Edit className="h-4 w-4 mr-1" />
-                    Edit
-                  </Button>
-                  <Button variant="outline" size="sm" onClick={() => handleDelete(tenant.id)}>
-                    <Trash2 className="h-4 w-4 mr-1" />
-                    Delete
-                  </Button>
-                </div>
-              </div>
+              <TenantCard
+                key={tenant.id}
+                tenant={tenant}
+                showConnectionStrings={showConnectionStrings}
+                onEdit={handleEdit}
+                onDelete={handleDelete}
+                onConfigure={handleConfigure}
+                onToggleStatus={toggleTenantStatus}
+                onToggleConnectionString={toggleConnectionString}
+              />
             ))}
           </div>
         </CardContent>
       </Card>
+
+      <TenantConfigDialog
+        tenant={configuringTenant}
+        isOpen={isConfigDialogOpen}
+        onClose={() => {
+          setIsConfigDialogOpen(false);
+          setConfiguringTenant(null);
+        }}
+        onSave={handleSaveConfig}
+      />
     </div>
   );
 };
