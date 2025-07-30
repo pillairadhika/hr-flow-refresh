@@ -9,6 +9,7 @@ interface DashboardLayoutProps {
 }
 
 export const DashboardLayout = ({ children }: DashboardLayoutProps) => {
+  console.log("DashboardLayout rendering...");
   const [sidebarOpen, setSidebarOpen] = useState(true);
 
   return (

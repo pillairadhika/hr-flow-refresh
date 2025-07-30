@@ -6,6 +6,8 @@ import { EmployeeSection } from "@/components/EmployeeSection";
 import { BirthdaySection } from "@/components/BirthdaySection";
 
 const Index = () => {
+  console.log("Index component rendering...");
+  
   return (
     <DashboardLayout>
       <div className="p-6 space-y-6">
