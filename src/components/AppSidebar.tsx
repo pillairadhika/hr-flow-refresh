@@ -15,7 +15,8 @@ import {
   Building,
   Briefcase,
   DollarSign,
-  Archive
+  Archive,
+  CalendarDays
 } from "lucide-react";
 import { NavLink } from "react-router-dom";
 import {
@@ -56,6 +57,7 @@ const navigationItems = [
   {
     title: "ATTENDANCE & TIMESHEET",
     items: [
+      { title: "Employee Roster", url: "/employee-roster", icon: CalendarDays },
       { title: "Timesheet", url: "/timesheet", icon: Clock },
       { title: "Timesheet Report", url: "/timesheet-report", icon: FileText },
       { title: "Ranged Timesheet Report", url: "/ranged-timesheet", icon: Calendar },
