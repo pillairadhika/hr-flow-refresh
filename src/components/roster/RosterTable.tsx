@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
@@ -6,6 +5,8 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Badge } from "@/components/ui/badge";
 import { ViewType, Employee, Shift, RosterAssignment, ShiftType } from "@/pages/EmployeeRoster";
 import { format, addDays, startOfWeek, endOfWeek, startOfMonth, endOfMonth, eachDayOfInterval } from "date-fns";
+import { ShiftConflictsAlert } from "./ShiftConflictsAlert";
+import { detectShiftConflicts } from "@/utils/shiftConflicts";
 
 interface RosterTableProps {
   viewType: ViewType;
@@ -124,78 +125,84 @@ export const RosterTable = ({
     setAssignments(rosterData);
   }, [rosterData]);
 
+  // Detect conflicts in current assignments
+  const conflicts = detectShiftConflicts(assignments);
+
   return (
-    <Card>
-      <CardHeader>
-        <CardTitle>Roster Assignment</CardTitle>
-      </CardHeader>
-      <CardContent>
-        <div className="overflow-x-auto">
-          <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead className="w-48">Employee</TableHead>
-                <TableHead className="w-32">Department</TableHead>
-                {dates.map((date) => (
-                  <TableHead key={date.toISOString()} className="text-center min-w-24">
-                    <div className="flex flex-col">
-                      <span className="font-semibold">{format(date, "EEE")}</span>
-                      <span className="text-xs text-gray-500">{format(date, "MM/dd")}</span>
-                    </div>
-                  </TableHead>
-                ))}
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {mockEmployees.map((employee) => (
-                <TableRow key={employee.id}>
-                  <TableCell className="font-medium">
-                    <div>
-                      <div className="font-semibold">{employee.name}</div>
-                      <div className="text-sm text-gray-500">{employee.designation}</div>
-                    </div>
-                  </TableCell>
-                  <TableCell>
-                    <Badge variant="outline">{employee.department}</Badge>
-                  </TableCell>
-                  {dates.map((date) => {
-                    const currentShift = getShiftForEmployee(employee.id, date);
-                    return (
-                      <TableCell key={`${employee.id}-${date.toISOString()}`} className="text-center p-2">
-                        <Select
-                          value={currentShift}
-                          onValueChange={(value: ShiftType | "OFF") => 
-                            updateAssignment(employee.id, date, value)
-                          }
-                        >
-                          <SelectTrigger className={`w-20 h-8 text-xs ${getShiftColor(currentShift)}`}>
-                            <SelectValue>
-                              <span className="font-semibold">{currentShift}</span>
-                            </SelectValue>
-                          </SelectTrigger>
-                          <SelectContent>
-                            <SelectItem value="OFF">OFF</SelectItem>
-                            {mockShifts.map((shift) => (
-                              <SelectItem key={shift.id} value={shift.code}>
-                                <div className="flex flex-col text-left">
-                                  <span className="font-semibold">{shift.code}</span>
-                                  <span className="text-xs text-gray-500">
-                                    {shift.startTime}-{shift.endTime}
-                                  </span>
-                                </div>
-                              </SelectItem>
-                            ))}
-                          </SelectContent>
-                        </Select>
-                      </TableCell>
-                    );
-                  })}
+    <>
+      <ShiftConflictsAlert conflicts={conflicts} />
+      <Card>
+        <CardHeader>
+          <CardTitle>Roster Assignment</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <div className="overflow-x-auto">
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead className="w-48">Employee</TableHead>
+                  <TableHead className="w-32">Department</TableHead>
+                  {dates.map((date) => (
+                    <TableHead key={date.toISOString()} className="text-center min-w-24">
+                      <div className="flex flex-col">
+                        <span className="font-semibold">{format(date, "EEE")}</span>
+                        <span className="text-xs text-gray-500">{format(date, "MM/dd")}</span>
+                      </div>
+                    </TableHead>
+                  ))}
                 </TableRow>
-              ))}
-            </TableBody>
-          </Table>
-        </div>
-      </CardContent>
-    </Card>
+              </TableHeader>
+              <TableBody>
+                {mockEmployees.map((employee) => (
+                  <TableRow key={employee.id}>
+                    <TableCell className="font-medium">
+                      <div>
+                        <div className="font-semibold">{employee.name}</div>
+                        <div className="text-sm text-gray-500">{employee.designation}</div>
+                      </div>
+                    </TableCell>
+                    <TableCell>
+                      <Badge variant="outline">{employee.department}</Badge>
+                    </TableCell>
+                    {dates.map((date) => {
+                      const currentShift = getShiftForEmployee(employee.id, date);
+                      return (
+                        <TableCell key={`${employee.id}-${date.toISOString()}`} className="text-center p-2">
+                          <Select
+                            value={currentShift}
+                            onValueChange={(value: ShiftType | "OFF") => 
+                              updateAssignment(employee.id, date, value)
+                            }
+                          >
+                            <SelectTrigger className={`w-20 h-8 text-xs ${getShiftColor(currentShift)}`}>
+                              <SelectValue>
+                                <span className="font-semibold">{currentShift}</span>
+                              </SelectValue>
+                            </SelectTrigger>
+                            <SelectContent>
+                              <SelectItem value="OFF">OFF</SelectItem>
+                              {mockShifts.map((shift) => (
+                                <SelectItem key={shift.id} value={shift.code}>
+                                  <div className="flex flex-col text-left">
+                                    <span className="font-semibold">{shift.code}</span>
+                                    <span className="text-xs text-gray-500">
+                                      {shift.startTime}-{shift.endTime}
+                                    </span>
+                                  </div>
+                                </SelectItem>
+                              ))}
+                            </SelectContent>
+                          </Select>
+                        </TableCell>
+                      );
+                    })}
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
+          </div>
+        </CardContent>
+      </Card>
+    </>
   );
 };
