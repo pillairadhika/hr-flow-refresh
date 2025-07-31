@@ -1,10 +1,10 @@
-
 import { CalendarIcon, ChevronLeft, ChevronRight, Users } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
-import { ViewType } from "@/pages/EmployeeRoster";
+import { ViewType, RosterAssignment } from "@/pages/EmployeeRoster";
 import { Badge } from "@/components/ui/badge";
 import { format, addDays, addWeeks, addMonths, subDays, subWeeks, subMonths } from "date-fns";
+import { RosterUpload } from "./RosterUpload";
 
 interface RosterHeaderProps {
   viewType: ViewType;
@@ -13,6 +13,8 @@ interface RosterHeaderProps {
   onDateChange: (date: Date) => void;
   selectedEmployees: string[];
   onEmployeeSelection: (employees: string[]) => void;
+  onRosterImport: (assignments: RosterAssignment[]) => void;
+  existingAssignments: RosterAssignment[];
 }
 
 export const RosterHeader = ({
@@ -21,6 +23,8 @@ export const RosterHeader = ({
   currentDate,
   onDateChange,
   selectedEmployees,
+  onRosterImport,
+  existingAssignments,
 }: RosterHeaderProps) => {
   const getDateLabel = () => {
     switch (viewType) {
@@ -82,6 +86,11 @@ export const RosterHeader = ({
                 {selectedEmployees.length} employees selected
               </span>
             </div>
+
+            <RosterUpload 
+              onRosterImport={onRosterImport}
+              existingAssignments={existingAssignments}
+            />
 
             <div className="flex rounded-lg border p-1">
               {(["daily", "weekly", "monthly"] as ViewType[]).map((view) => (

@@ -43,6 +43,28 @@ const EmployeeRoster = () => {
     setRosterData(assignments);
   };
 
+  const handleRosterImport = (newAssignments: RosterAssignment[]) => {
+    // Merge new assignments with existing ones, replacing where there are conflicts
+    const updatedRoster = [...rosterData];
+    
+    newAssignments.forEach(newAssignment => {
+      const existingIndex = updatedRoster.findIndex(
+        existing => existing.employeeId === newAssignment.employeeId && 
+                   existing.date === newAssignment.date
+      );
+      
+      if (existingIndex >= 0) {
+        // Replace existing assignment
+        updatedRoster[existingIndex] = newAssignment;
+      } else {
+        // Add new assignment
+        updatedRoster.push(newAssignment);
+      }
+    });
+    
+    setRosterData(updatedRoster);
+  };
+
   return (
     <DashboardLayout>
       <div className="p-6 space-y-6">
@@ -57,6 +79,8 @@ const EmployeeRoster = () => {
           onDateChange={setCurrentDate}
           selectedEmployees={selectedEmployees}
           onEmployeeSelection={setSelectedEmployees}
+          onRosterImport={handleRosterImport}
+          existingAssignments={rosterData}
         />
 
         <RosterTable
